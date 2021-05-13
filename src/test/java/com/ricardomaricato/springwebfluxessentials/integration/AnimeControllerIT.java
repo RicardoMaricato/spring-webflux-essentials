@@ -1,11 +1,13 @@
 package com.ricardomaricato.springwebfluxessentials.integration;
 
 import com.ricardomaricato.springwebfluxessentials.domain.Anime;
+import com.ricardomaricato.springwebfluxessentials.exception.CustomAttributes;
 import com.ricardomaricato.springwebfluxessentials.repository.AnimeRepository;
 import com.ricardomaricato.springwebfluxessentials.service.AnimeService;
 import com.ricardomaricato.springwebfluxessentials.util.AnimeCreator;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.BDDMockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
@@ -16,6 +18,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.blockhound.BlockHound;
 import reactor.blockhound.BlockingOperationError;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.concurrent.FutureTask;
@@ -23,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 @ExtendWith(SpringExtension.class)
 @WebFluxTest
-@Import(AnimeService.class)
+@Import({AnimeService.class, CustomAttributes.class})
 public class AnimeControllerIT {
 
     @MockBean
@@ -43,6 +46,9 @@ public class AnimeControllerIT {
     public void setUp() {
         BDDMockito.when(animeRepositoryMock.findAll())
                 .thenReturn(Flux.just(anime));
+
+        BDDMockito.when(animeRepositoryMock.findById(ArgumentMatchers.anyInt()))
+                .thenReturn(Mono.just(anime));
     }
 
     @Test
@@ -85,5 +91,34 @@ public class AnimeControllerIT {
                 .expectBodyList(Anime.class)
                 .hasSize(1)
                 .contains(anime);
+    }
+
+    @Test
+    @DisplayName("findById returns a Mono with anime when it exists")
+    public void findById_ReturnMonoAnime_WhenSuccessful() {
+        testClient
+                .get()
+                .uri("/animes/{id}",1)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(Anime.class)
+                .isEqualTo(anime);
+    }
+
+    @Test
+    @DisplayName("findById returns Mono error when anime does not exist")
+    public void findById_ReturnMonoError_WhenEmptyMonoIsReturned() {
+        BDDMockito.when(animeRepositoryMock.findById(ArgumentMatchers.anyInt()))
+                .thenReturn(Mono.empty());
+
+        testClient
+                .get()
+                .uri("/animes/{id}",1)
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo(404)
+                .jsonPath("$.developerMessage").isEqualTo("A ResponseStatusException Happened");
+
     }
 }
