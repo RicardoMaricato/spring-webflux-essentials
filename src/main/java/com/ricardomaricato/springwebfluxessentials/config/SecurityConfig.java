@@ -1,7 +1,10 @@
 package com.ricardomaricato.springwebfluxessentials.config;
 
+import com.ricardomaricato.springwebfluxessentials.service.DevDojoUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.ReactiveAuthenticationManager;
+import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -35,6 +38,12 @@ public class SecurityConfig {
     }
 
     @Bean
+    ReactiveAuthenticationManager authenticationManager(DevDojoUserDetailsService devDojoUserDetailsService) {
+        return new UserDetailsRepositoryReactiveAuthenticationManager(devDojoUserDetailsService);
+    }
+
+/** In Memory **/
+/**    @Bean
     public MapReactiveUserDetailsService userDetailsService() {
         PasswordEncoder passwordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
         UserDetails user = User.withUsername("user")
@@ -48,6 +57,6 @@ public class SecurityConfig {
                 .build();
 
         return new MapReactiveUserDetailsService(user, admin);
-    }
+    }**/
 }
 
