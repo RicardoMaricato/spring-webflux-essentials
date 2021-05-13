@@ -25,15 +25,17 @@ public class SecurityConfig {
         return http
                 .csrf().disable()
                 .authorizeExchange()
-                .pathMatchers(HttpMethod.POST, "/animes/**").hasRole("ADMIN")
-                .pathMatchers(HttpMethod.GET, "/animes/**").hasRole("USER")
+                    .pathMatchers(HttpMethod.POST, "/animes/**").hasRole("ADMIN")
+                    .pathMatchers(HttpMethod.PUT, "/animes/**").hasRole("ADMIN")
+                    .pathMatchers(HttpMethod.DELETE, "/animes/**").hasRole("ADMIN")
+                    .pathMatchers(HttpMethod.GET, "/animes/**").hasRole("USER")
                 .anyExchange().authenticated()
                 .and()
-                .formLogin()
+                    .formLogin()
                 .and()
-                .httpBasic()
+                    .httpBasic()
                 .and()
-                .build();
+                    .build();
         //@formatter:on
     }
 
